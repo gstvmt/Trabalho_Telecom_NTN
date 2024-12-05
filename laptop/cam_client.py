@@ -4,6 +4,7 @@ import struct
 import numpy as np
 
 MAX_DGRAM = 2**16
+COUNT_LIMIT = 255
 
 # Configurar o socket UDP
 server_adress = ("localhost", 5005)
@@ -23,16 +24,24 @@ lost_packets_count = 0
 while True:
     message, adress = client.recvfrom(MAX_DGRAM)
 
-    if struct.unpack("B", message[0:1])[0] > 1:
-        buffer += message[1:]
+    sequence_number = struct.unpack("BB", message[0:2])[0]
+    if expected_sequence_number != sequence_number:
+        print(f"Perda de pacote detectada. Esperado: {expected_sequence_number}, Recebido: {sequence_number}")
+        lost_packets_count += 1
+
+    expected_sequence_number = (expected_sequence_number + 1)%COUNT_LIMIT
+
+    if struct.unpack("BB", message[0:2])[1] > 1:
+        buffer += message[2:]
     else:
-        buffer += message[1:]
+        buffer += message[2:]
         img = cv2.imdecode(np.fromstring(buffer, dtype=np.uint8), 1)
         cv2.imshow("frame", img)
         if cv2.waitKey(1) == 27:
             break
         buffer = b''
 
-   
+
+print(f"Ocorreram {lost_packets_count} perdas de pacote!")  
 cv2.destroyAllWindows()
 client.close()

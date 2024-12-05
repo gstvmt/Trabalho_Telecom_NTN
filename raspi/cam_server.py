@@ -9,6 +9,7 @@ UDP_PORT = 5005
 
 MAX_DGRAM = 2**16
 MAX_IMAGE_DGRAM = MAX_DGRAM - 64
+CONT_LIMIT = 255
 
 server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 server.bind((UDP_IP, UDP_PORT))
@@ -45,9 +46,10 @@ try:
 
         while num_of_segments:
             end = min(size, start + MAX_IMAGE_DGRAM)
-            server.sendto(struct.pack("B", num_of_segments) + buffer[start : end], address)
+            server.sendto(struct.pack("BB", sequence_number, num_of_segments) + buffer[start : end], address)
             start = end
             num_of_segments -= 1
+            sequence_number = (sequence_number + 1)%CONT_LIMIT
 
 finally:
     cap.release()
