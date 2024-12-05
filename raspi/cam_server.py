@@ -18,8 +18,11 @@ print(f"Servidor iniciado em {UDP_IP}:{UDP_PORT}. Aguardando cliente...")
 
 # Esperar pelo primeiro cliente
 msg, address = server.recvfrom(1024)
+server.sendto("Conexao estabelecida.".encode("utf-8"), address)
+
 print(f"Cliente conectado: {address}")
 print(msg.decode('utf-8'))
+
 
 cap = cv2.VideoCapture(0)
 
