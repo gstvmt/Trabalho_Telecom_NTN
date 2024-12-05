@@ -2,6 +2,7 @@ import cv2
 import socket
 import struct
 import math
+import time
 
 # Configurar o socket UDP
 UDP_IP = "localhost"
@@ -23,7 +24,6 @@ server.sendto("Conexao estabelecida.".encode("utf-8"), address)
 print(f"Cliente conectado: {address}")
 print(msg.decode('utf-8'))
 
-
 cap = cv2.VideoCapture(0)
 
 if not cap.isOpened():
@@ -35,24 +35,27 @@ sequence_number = 0
 
 try:
     while True:
-
         ret, frame = cap.read()
         if not ret:
             print("Erro ao capturar frame")
             break
 
         _, buffer = cv2.imencode('.jpg', frame)
-        buffer = buffer.tostring()
+        buffer = buffer.tobytes()
         size = len(buffer)
-        num_of_segments = math.ceil(size/MAX_IMAGE_DGRAM)
+        num_of_segments = math.ceil(size / MAX_IMAGE_DGRAM)
         start = 0
 
         while num_of_segments:
             end = min(size, start + MAX_IMAGE_DGRAM)
-            server.sendto(struct.pack("BB", sequence_number, num_of_segments) + buffer[start : end], address)
+            timestamp = time.time()  # Obter o timestamp atual em segundos
+            timestamp_data = struct.pack("d", timestamp)  # Empacotar o timestamp em formato double (8 bytes)
+            packet = struct.pack("BB", sequence_number, num_of_segments) + buffer[start:end]
+            #server.sendto(struct.pack("BB", sequence_number, num_of_segments) + timestamp_data + buffer[start:end], address)
+            server.sendto(packet, address)
             start = end
             num_of_segments -= 1
-            sequence_number = (sequence_number + 1)%CONT_LIMIT
+            sequence_number = (sequence_number + 1) % CONT_LIMIT
 
 finally:
     cap.release()
