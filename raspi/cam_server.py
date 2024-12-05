@@ -44,16 +44,20 @@ try:
         # Alinha abaixo foi alterada por: DeprecationWarning: tostring() is deprecated. Use tobytes() instead. buffer = buffer.tostring()
         # buffer = buffer.tostring()
         buffer = buffer.tobytes()
+
+        # Enviar o timestamp como pacote separado
+        timestamp = time.time()
+        timestamp_data = struct.pack("d", timestamp)
+        server.sendto(timestamp_data, address)
+
+        # Enviar a imagem segmentada
         size = len(buffer)
         num_of_segments = math.ceil(size / MAX_IMAGE_DGRAM)
         start = 0
 
         while num_of_segments:
             end = min(size, start + MAX_IMAGE_DGRAM)
-            timestamp = time.time()  # Obter o timestamp atual em segundos
-            timestamp_data = struct.pack("d", timestamp)  # Empacotar o timestamp em formato double (8 bytes)
             packet = struct.pack("BB", sequence_number, num_of_segments) + buffer[start:end]
-            #server.sendto(struct.pack("BB", sequence_number, num_of_segments) + timestamp_data + buffer[start:end], address)
             server.sendto(packet, address)
             start = end
             num_of_segments -= 1

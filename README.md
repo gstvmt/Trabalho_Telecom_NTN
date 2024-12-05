@@ -17,3 +17,5 @@ Mede o tempo gasto pelo cliente para decodificar e exibir cada quadro. Usa o tim
 
 6. Utilização da Rede (Network Utilization)
 Mede o quanto da capacidade da rede está sendo utilizada pela aplicação. Compara a largura de banda atual com a largura de banda total disponível.
+
+7. Largura de Banda (ou Throughput): Representa a taxa efetiva de transferência de dados ao longo da conexão. É o total de dados recebidos dividido pelo tempo total que levou para recebê-los.

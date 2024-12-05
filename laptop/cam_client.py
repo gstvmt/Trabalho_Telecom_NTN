@@ -46,11 +46,22 @@ decode_times = [] # decodificação
 latencies = [] # latência
 
 while True:
+
     # Recebe mensagem
     message, address = client.recvfrom(MAX_DGRAM)
     total_data_received += len(message)
 
-    # Analisar sequência
+    # Latência
+    if len(message) == 8:  # Um pacote de timestamp terá exatamente 8 bytes
+        # Processar o timestamp
+        server_time = struct.unpack("d", message)[0]
+        transmission_latency = time.time() - server_time
+        latencies.append(transmission_latency)
+        #Flooda a latencia no terminal
+        #print(f"Latência: {transmission_latency:.4f} segundos")
+        continue
+
+    # Analisar sequência Imagem
     sequence_number, segments_left = struct.unpack("BB", message[0:2])
     if expected_sequence_number != sequence_number:
         #comentei a linha abaixo pra não ficar floodando o terminal
@@ -76,11 +87,6 @@ while True:
         img = cv2.imdecode(np.frombuffer(buffer, dtype=np.uint8), 1)
         decode_time = time.time() - decode_start
         decode_times.append(decode_time)
-
-        # Latência
-        server_time = struct.unpack("d", buffer[:8])[0]  # o servidor envie o timestamp
-        transmission_latency = time.time() - server_time
-        latencies.append(transmission_latency)
 
         # Mostrar quadro
         cv2.imshow("frame", img)
@@ -113,7 +119,7 @@ while True:
             arquivo.write(f"Jitter Médio: {np.mean(jitter_list):.3f} segundos\n")
             arquivo.write(f"Largura de Banda: {bandwidth:.2f} MB/s\n")
             arquivo.write(f"Utilização da Rede: {utilization:.2f}%\n")
-            arquivo.write(f"Latência Média: {np.mean(latencies):.3f} segundos\n")
+            arquivo.write(f"Latência Média: {np.mean(latencies):.5f} segundos\n")
             arquivo.write(f"Tempo Médio de Decodificação: {np.mean(decode_times):.4f} segundos\n")
             arquivo.write(f"FPS Recebidos: {frames_received}\n")
         last_save_time = time.time()
