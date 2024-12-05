@@ -1,32 +1,55 @@
-# Código na Raspberry Pi (Servidor)
-# Pega as informaçoes da camera e as envia para o computador
-import time
-import pickle
-import socket
 import cv2
+import socket
+import struct
+import math
 
-# Configuração do servidor
-HOST = '0.0.0.0'
-PORT = 5000
-server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-server_socket.bind((HOST, PORT))
-server_socket.listen(1)
-print("Aguardando conexão...")
+# Configurar o socket UDP
+UDP_IP = "localhost"
+UDP_PORT = 5005
 
-conn, addr = server_socket.accept()
-print(f"Conectado a {addr}")
+MAX_DGRAM = 2**16
+MAX_IMAGE_DGRAM = MAX_DGRAM - 64
 
-# Configuração da câmera
-camera = cv2.VideoCapture(0)
+server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+server.bind((UDP_IP, UDP_PORT))
 
-while True:
-    ret, frame = camera.read()
-    if not ret:
-        break
-    timestamp = time.time()  # Marca o horário do envio
-    data = pickle.dumps((timestamp, frame))  # Envia timestamp junto com a imagem
-    conn.sendall(data)
+print(f"Servidor iniciado em {UDP_IP}:{UDP_PORT}. Aguardando cliente...")
 
-camera.release()
-conn.close()
-server_socket.close()
+# Esperar pelo primeiro cliente
+msg, address = server.recvfrom(1024)
+print(f"Cliente conectado: {address}")
+print(msg.decode('utf-8'))
+
+cap = cv2.VideoCapture(0)
+
+if not cap.isOpened():
+    print("Erro ao abrir a câmera")
+    server.close()
+    exit()
+
+sequence_number = 0
+
+try:
+    while True:
+
+        ret, frame = cap.read()
+        if not ret:
+            print("Erro ao capturar frame")
+            break
+
+        _, buffer = cv2.imencode('.jpg', frame)
+        buffer = buffer.tostring()
+        size = len(buffer)
+        num_of_segments = math.ceil(size/MAX_IMAGE_DGRAM)
+        start = 0
+
+        while num_of_segments:
+            end = min(size, start + MAX_IMAGE_DGRAM)
+            server.sendto(struct.pack("B", num_of_segments) + buffer[start : end], address)
+            start = end
+            num_of_segments -= 1
+
+finally:
+    cap.release()
+    server.close()
+    print("Servidor encerrado")

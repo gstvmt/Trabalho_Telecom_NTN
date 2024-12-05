@@ -1,41 +1,38 @@
-# Código no Computador (Cliente)
-# recebe as imagens por meio da rede wifi e avalia o meio de comunicaçao.
-
-import socket
-import pickle
-import time
 import cv2
+import socket
+import struct
+import numpy as np
 
-# Configuração do cliente
-HOST = '192.168.1.X'  # IP da Raspberry Pi
-PORT = 5000
+MAX_DGRAM = 2**16
 
-client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-client_socket.connect((HOST, PORT))
+# Configurar o socket UDP
+server_adress = ("localhost", 5005)
+client_adress = ("localhost", 5080)
 
-received_packets = 0
-missed_packets = 0
+client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+client.bind(client_adress)
+
+print(f"Client iniciado em {client_adress[0]}:{client_adress[1]}. Aguardando cliente...")
+
+client.sendto("Estabelecendo conexao client -> server".encode("utf-8"), server_adress)
+
+buffer = b''
+expected_sequence_number = 0
+lost_packets_count = 0
 
 while True:
-    data = client_socket.recv(4096)
-    if not data:
-        break
-    try:
-        timestamp, frame = pickle.loads(data)
-        # Verifica se o timestamp está dentro do esperado
-        if timestamp:
-            received_packets += 1
-        else:
-            missed_packets += 1
-        cv2.imshow("Frame", frame)
-        if cv2.waitKey(1) & 0xFF == ord('q'):
+    message, adress = client.recvfrom(MAX_DGRAM)
+
+    if struct.unpack("B", message[0:1])[0] > 1:
+        buffer += message[1:]
+    else:
+        buffer += message[1:]
+        img = cv2.imdecode(np.fromstring(buffer, dtype=np.uint8), 1)
+        cv2.imshow("frame", img)
+        if cv2.waitKey(1) == 27:
             break
-    except Exception as e:
-        missed_packets += 1
+        buffer = b''
 
-client_socket.close()
+   
 cv2.destroyAllWindows()
-
-# Relatório da perda de pacotes
-print(f"Pacotes recebidos: {received_packets}")
-print(f"Pacotes perdidos: {missed_packets}")
+client.close()
