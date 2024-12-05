@@ -72,6 +72,7 @@ while True:
         buffer += message[2:]
         decode_start = time.time()
         # Alinha abaixo foi alterada por: DeprecationWarning: The binary mode of fromstring is deprecated, as it behaves surprisingly on unicode inputs. Use frombuffer instead
+        # img = cv2.imdecode(np.fromstring(buffer, dtype=np.uint8), 1)
         img = cv2.imdecode(np.frombuffer(buffer, dtype=np.uint8), 1)
         decode_time = time.time() - decode_start
         decode_times.append(decode_time)
