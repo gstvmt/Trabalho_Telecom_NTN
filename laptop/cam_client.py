@@ -53,6 +53,7 @@ while True:
     # Analisar sequência
     sequence_number, segments_left = struct.unpack("BB", message[0:2])
     if expected_sequence_number != sequence_number:
+        #comentei a linha abaixo pra não ficar floodando o terminal
        #print(f"Perda de pacote detectada. Esperado: {expected_sequence_number}, Recebido: {sequence_number}")  
         lost_packets_count += 1
     
@@ -65,11 +66,12 @@ while True:
     last_packet_time = current_time
 
     # Buffer de imagem
-    if segments_left > 1:
+    if struct.unpack("BB", message[0:2])[1] > 1:
         buffer += message[2:]
     else:
         buffer += message[2:]
         decode_start = time.time()
+        # Alinha abaixo foi alterada por: DeprecationWarning: The binary mode of fromstring is deprecated, as it behaves surprisingly on unicode inputs. Use frombuffer instead
         img = cv2.imdecode(np.frombuffer(buffer, dtype=np.uint8), 1)
         decode_time = time.time() - decode_start
         decode_times.append(decode_time)

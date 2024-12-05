@@ -41,6 +41,8 @@ try:
             break
 
         _, buffer = cv2.imencode('.jpg', frame)
+        # Alinha abaixo foi alterada por: DeprecationWarning: tostring() is deprecated. Use tobytes() instead. buffer = buffer.tostring()
+        # buffer = buffer.tostring()
         buffer = buffer.tobytes()
         size = len(buffer)
         num_of_segments = math.ceil(size / MAX_IMAGE_DGRAM)
