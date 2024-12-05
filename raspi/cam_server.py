@@ -3,6 +3,9 @@ import socket
 import struct
 import math
 import time
+import os
+
+from utils.ruido_gaussiano import add_gaussian_noise
 
 # Configurar o socket UDP
 UDP_IP = "localhost"
@@ -11,6 +14,8 @@ UDP_PORT = 5005
 MAX_DGRAM = 2**16
 MAX_IMAGE_DGRAM = MAX_DGRAM - 64
 CONT_LIMIT = 255
+
+OUTPUT_DIR = "frames_server"
 
 server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 server.bind((UDP_IP, UDP_PORT))
@@ -39,8 +44,14 @@ try:
         if not ret:
             print("Erro ao capturar frame")
             break
+        
+        frame_filename = os.path.join(OUTPUT_DIR, f"frame_{sequence_number}.jpg")
+        cv2.imwrite(frame_filename, frame)
+        
+        # Simulacao de um ruido para test, tirar quando for fazer no drone
+        frame_noisy = add_gaussian_noise(frame)
 
-        _, buffer = cv2.imencode('.jpg', frame)
+        _, buffer = cv2.imencode('.jpg', frame_noisy)
         # Alinha abaixo foi alterada por: DeprecationWarning: tostring() is deprecated. Use tobytes() instead. buffer = buffer.tostring()
         # buffer = buffer.tostring()
         buffer = buffer.tobytes()

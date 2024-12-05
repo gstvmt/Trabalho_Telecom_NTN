@@ -9,6 +9,8 @@ from datetime import datetime
 MAX_DGRAM = 2**16
 COUNT_LIMIT = 255
 
+OUTPUT_DIR = "frames_client"
+
 # Configurar o socket UDP
 server_address = ("localhost", 5005)
 client_address = ("localhost", 5080)
@@ -85,6 +87,9 @@ while True:
         # Alinha abaixo foi alterada por: DeprecationWarning: The binary mode of fromstring is deprecated, as it behaves surprisingly on unicode inputs. Use frombuffer instead
         # img = cv2.imdecode(np.fromstring(buffer, dtype=np.uint8), 1)
         img = cv2.imdecode(np.frombuffer(buffer, dtype=np.uint8), 1)
+        
+        frame_filename = os.path.join(OUTPUT_DIR, f"frame_{expected_sequence_number}.jpg")
+        cv2.imwrite(frame_filename, img)
         decode_time = time.time() - decode_start
         decode_times.append(decode_time)
 
