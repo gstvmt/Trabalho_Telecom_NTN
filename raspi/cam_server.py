@@ -5,7 +5,7 @@ import math
 import time
 
 # Configurar o socket UDP
-UDP_IP = "localhost-1"
+UDP_IP = "localhost"
 UDP_PORT = 5005
 
 MAX_DGRAM = 2**16
