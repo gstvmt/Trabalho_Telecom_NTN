@@ -20,9 +20,8 @@ print(f"Servidor iniciado em {UDP_IP}:{UDP_PORT}. Aguardando cliente...")
 # Esperar pelo primeiro cliente
 msg, address = server.recvfrom(1024)
 server.sendto("Conexao estabelecida.".encode("utf-8"), address)
-
 print(f"Cliente conectado: {address}")
-print(msg.decode('utf-8'))
+print(msg.decode("utf-8"))
 
 cap = cv2.VideoCapture(0)
 
@@ -62,6 +61,16 @@ try:
             start = end
             num_of_segments -= 1
             sequence_number = (sequence_number + 1) % CONT_LIMIT
+        
+        # A cada 256 sequencias, calcula o ping
+        if sequence_number == 0:
+            time_test_start = time.perf_counter()
+            msg, address = server.recvfrom(1024)
+            server.sendto("pong".encode("utf-8"), address)
+            time_test_end = time.perf_counter()
+            tempo_teste = (time_test_end - time_test_end)*1000
+            print(f"{tempo_teste:.5f}\n")
+
 
 finally:
     cap.release()
