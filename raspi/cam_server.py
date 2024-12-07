@@ -19,7 +19,6 @@ print(f"Servidor iniciado em {UDP_IP}:{UDP_PORT}. Aguardando cliente...")
 
 # Esperar pelo primeiro cliente
 msg, address = server.recvfrom(1024)
-server.sendto("Conexao estabelecida.".encode("utf-8"), address)
 print(f"Cliente conectado: {address}")
 
 client_time = struct.unpack("d", msg)[0]    # Armazena o tempo do relógio do client

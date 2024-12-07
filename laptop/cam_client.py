@@ -24,7 +24,6 @@ max_bandwidth = 21  # largura de banda máxima disponível  ??(CAPACIDADE DO CAN
 last_save_time = time.time()  # Controle de gravação de métricas
 decode_times = [] # decodificação
 latencies = [] # latência
-ping_list = []
 
 # Configurar o socket UDP
 server_address = ("localhost", 5005)
@@ -36,16 +35,6 @@ client.bind(client_address)
 print(f"Client iniciado em {client_address[0]}:{client_address[1]}. Aguardando cliente...")
 
 client.sendto(struct.pack("d", time.time()), server_address)
-
-# Calcula o Ping ao iniciar a conexão
-ping_start_time = time.perf_counter()
-msg, address = client.recvfrom(1024)
-ping_end_time = time.perf_counter()
-ping = (ping_end_time - ping_start_time) * 1000  # Ping em ms
-ping_list.append(ping)
-
-print(f"Ping: {ping:.3f} ms")
-print(msg.decode('utf-8'))
 
 
 while True:
@@ -71,7 +60,9 @@ while True:
     # Analisar sequência Imagem
     sequence_number, segments_left, server_timestamp = struct.unpack("BBd", message[:header_size])
 
-    print(time.time() - server_timestamp)       # Isso aqui é a suposta latência, mas não tenho nem ideia qual é a unidade de medida, talvez seja segundos
+    if time.time() - server_timestamp > 0:
+        latencies.append(time.time() - server_timestamp)
+        print(time.time() - server_timestamp)
 
     if expected_sequence_number != sequence_number:
         #comentei a linha abaixo pra não ficar floodando o terminal
@@ -99,11 +90,18 @@ while True:
         decode_times.append(decode_time)
 
         # Mostrar quadro
-        cv2.imshow("frame", img)
-        frames_received += 1
-        buffer = b''
-        if cv2.waitKey(1) == 27:
-            break
+
+        try:
+            cv2.imshow("frame", img)
+            frames_received += 1
+            buffer = b''
+            if cv2.waitKey(1) == 27:
+                break
+        except Exception as e:
+            print(f"Falha: {e}")
+            buffer = b''
+            continue
+
 
     
 
@@ -142,7 +140,6 @@ while True:
         with open("metricas.txt", "a") as arquivo:  # "a" para anexar dados
             current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             arquivo.write(f"\n[Dados registrados em: {current_time}]\n")
-            arquivo.write(f"Ping Médio: {np.mean(ping_list):.3f} ms\n")
             arquivo.write(f"Jitter Médio: {np.mean(jitter_list):.3f} segundos\n")
             arquivo.write(f"Largura de Banda: {bandwidth:.2f} MB/s\n")
             arquivo.write(f"Utilização da Rede: {utilization:.2f}%\n")
