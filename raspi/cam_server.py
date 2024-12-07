@@ -21,7 +21,9 @@ print(f"Servidor iniciado em {UDP_IP}:{UDP_PORT}. Aguardando cliente...")
 msg, address = server.recvfrom(1024)
 server.sendto("Conexao estabelecida.".encode("utf-8"), address)
 print(f"Cliente conectado: {address}")
-print(msg.decode("utf-8"))
+
+client_time = struct.unpack("d", msg)[0]    # Armazena o tempo do relógio do client
+time_offset = client_time - time.time()     # Calcula a diferença de tempo entre os dois relógios
 
 cap = cv2.VideoCapture(0)
 
@@ -44,24 +46,29 @@ try:
         # buffer = buffer.tostring()
         buffer = buffer.tobytes()
 
+        """
         # Enviar o timestamp como pacote separado
         timestamp = time.time()
         timestamp_data = struct.pack("d", timestamp)
         server.sendto(timestamp_data, address)
+        """
 
         # Enviar a imagem segmentada
         size = len(buffer)
         num_of_segments = math.ceil(size / MAX_IMAGE_DGRAM)
         start = 0
 
+        timestamp = time.time() + time_offset
+
         while num_of_segments:
             end = min(size, start + MAX_IMAGE_DGRAM)
-            packet = struct.pack("BB", sequence_number, num_of_segments) + buffer[start:end]
+            packet = struct.pack("BBd", sequence_number, num_of_segments, timestamp) + buffer[start:end]
             server.sendto(packet, address)
             start = end
             num_of_segments -= 1
             sequence_number = (sequence_number + 1) % CONT_LIMIT
         
+        """
         # A cada 256 sequencias, calcula o ping
         if sequence_number == 0:
             time_test_start = time.perf_counter()
@@ -70,6 +77,7 @@ try:
             time_test_end = time.perf_counter()
             tempo_teste = (time_test_end - time_test_end)*1000
             print(f"{tempo_teste:.5f}\n")
+        """
 
 
 finally:

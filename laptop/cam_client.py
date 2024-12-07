@@ -35,7 +35,7 @@ client.bind(client_address)
 
 print(f"Client iniciado em {client_address[0]}:{client_address[1]}. Aguardando cliente...")
 
-client.sendto("Estabelecendo conexao client -> server".encode("utf-8"), server_address)
+client.sendto(struct.pack("d", time.time()), server_address)
 
 # Calcula o Ping ao iniciar a conexão
 ping_start_time = time.perf_counter()
@@ -47,12 +47,14 @@ ping_list.append(ping)
 print(f"Ping: {ping:.3f} ms")
 print(msg.decode('utf-8'))
 
+
 while True:
 
     # Recebe mensagem
     message, address = client.recvfrom(MAX_DGRAM)
     total_data_received += len(message)
 
+    """
     # Latência
     if len(message) == 8:  # Um pacote de timestamp terá exatamente 8 bytes
         # Processar o timestamp
@@ -62,30 +64,36 @@ while True:
         #Flooda a latencia no terminal
         #print(f"Latência: {transmission_latency:.4f} segundos")
         continue
+    """
+
+    header_size = struct.calcsize("BBd")
 
     # Analisar sequência Imagem
-    sequence_number, segments_left = struct.unpack("BB", message[0:2])
+    sequence_number, segments_left, server_timestamp = struct.unpack("BBd", message[:header_size])
+
+    print(time.time() - server_timestamp)       # Isso aqui é a suposta latência, mas não tenho nem ideia qual é a unidade de medida, talvez seja segundos
+
     if expected_sequence_number != sequence_number:
         #comentei a linha abaixo pra não ficar floodando o terminal
-       #print(f"Perda de pacote detectada. Esperado: {expected_sequence_number}, Recebido: {sequence_number}")  
+        #print(f"Perda de pacote detectada. Esperado: {expected_sequence_number}, Recebido: {sequence_number}")  
         lost_packets_count += 1
 
     expected_sequence_number = (expected_sequence_number + 1) % COUNT_LIMIT
 
+    
     # Jitter
     current_time = time.time()
     jitter = abs(current_time - last_packet_time)
     jitter_list.append(jitter)
     last_packet_time = current_time
+    
 
     # Buffer de imagem
-    if struct.unpack("BB", message[0:2])[1] > 1:
-        buffer += message[2:]
+    if struct.unpack("BBd", message[:header_size])[1] > 1:
+        buffer += message[header_size:]
     else:
-        buffer += message[2:]
+        buffer += message[header_size:]
         decode_start = time.time()
-        # Alinha abaixo foi alterada por: DeprecationWarning: The binary mode of fromstring is deprecated, as it behaves surprisingly on unicode inputs. Use frombuffer instead
-        # img = cv2.imdecode(np.fromstring(buffer, dtype=np.uint8), 1)
         img = cv2.imdecode(np.frombuffer(buffer, dtype=np.uint8), 1)
         decode_time = time.time() - decode_start
         decode_times.append(decode_time)
@@ -96,6 +104,8 @@ while True:
         buffer = b''
         if cv2.waitKey(1) == 27:
             break
+
+    
 
     # Largura de banda
     elapsed_time = time.time() - bandwidth_start_time
@@ -112,6 +122,7 @@ while True:
         frames_received = 0
         frame_start_time = time.time()
 
+    """
     # Ping
     if expected_sequence_number == 0:
         client.sendto("ping".encode("utf-8"), server_address)
@@ -124,6 +135,7 @@ while True:
         ping_list.append(ping)
 
         print(f"Ping: {ping:.4f} ms")
+    """
 
     # Salvar métricas no arquivo
     if time.time() - last_save_time >= 20:
@@ -138,6 +150,8 @@ while True:
             arquivo.write(f"Tempo Médio de Decodificação: {np.mean(decode_times):.4f} segundos\n")
             arquivo.write(f"FPS Recebidos: {frames_received}\n")
         last_save_time = time.time()
+
+    
 
 print(f"Ocorreram {lost_packets_count} perdas de pacote!")  
 file_path = os.path.join(os.getcwd(), "metricas.txt")
