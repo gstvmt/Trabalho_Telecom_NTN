@@ -1,0 +1,3 @@
+[submodule "src/ros2_raspicam_node"]
+	path = src/ros2_raspicam_node
+	url = https://github.com/Misterblue/ros2_raspicam_node.git
