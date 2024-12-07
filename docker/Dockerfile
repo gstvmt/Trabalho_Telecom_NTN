@@ -1,5 +1,6 @@
 # Use a imagem base do ROS 2 Humble Desktop
 FROM osrf/ros:humble-desktop-full
+# FROM arm64v8/ros:humble
 
 # Defina o maintainer (opcional)
 LABEL maintainer="seu-email@exemplo.com"
