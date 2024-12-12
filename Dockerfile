@@ -14,11 +14,13 @@ RUN apt-get update && apt-get install -y \
     rm -rf /var/lib/apt/lists/*
 
 # Instale o opencv-python via pip
-RUN pip3 install opencv-python && pip install picamera
+RUN pip3 install opencv-python
 
 RUN mkdir -p ~/ros_ws/src
 COPY ./src ~/ros_ws/src
 
 RUN bash -c "cd ~/ros_ws && colcon build --symlink-install"
+RUN echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc
+RUN echo "source ~/ros_ws/install/setup.bash" >> ~/.bashrc
 # Defina o entrypoint padrão para o ROS 2
 CMD ["bash"]

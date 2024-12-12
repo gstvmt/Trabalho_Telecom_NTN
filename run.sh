@@ -17,6 +17,7 @@ xauth nlist $DISPLAY | sed -e 's/^..../ffff/' | xauth -f $XAUTH nmerge -
 # Execute o container
 docker run -it --rm --privileged --device /dev/video0:/dev/video0 -e DISPLAY=$DISPLAY \
     -v ./src:/root/ros_ws/src -v /dev:/dev --env="QT_X11_NO_MITSHM=1" \
+    --name="Telecom" \
     --volume="/tmp/.X11-unix:/tmp/.X11-unix:rw" \
     --env="XAUTHORITY=$XAUTH" \
     --volume="$XAUTH:$XAUTH" $IMAGE_NAME bash

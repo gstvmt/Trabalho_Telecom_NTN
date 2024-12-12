@@ -39,8 +39,25 @@ Para facilitar o ambiente de testes, um `Dockerfile` foi fornecido. Ele utiliza 
      ./run.sh
      ```
 
-   Isso irá iniciar o contêiner e executar os scripts no ambiente ROS 2, permitindo que você teste a publicação e assinatura das imagens de vídeo.
+   Isso irá iniciar o contêiner.
 
+3. **Rodadno o Publisher**
+   - Entre no diretório em que estão os script e rode o publisher
+   ```bash
+   cd /root/ros_ws/src/opencv_tools/opencv_tools/ && python3 image_publisher.py
+   ``` 
+
+4. **Entrando no COntainer**
+   - Em outro terminal, entre no container da seguinte forma caso esteja testando no mesmo computador. Se estiver testando em outro dispositivo, execute o passo 2 ao inves desse:
+   ```bash
+   docker exec -it Telecom bash
+   ```
+
+5. **Rodando o Subscriber**
+   - Execute o subscriber da seguinte forma:
+   ```bash
+   cd /root/ros_ws/src/opencv_tools/opencv_tools/ && python3 image_subscriber.py
+   ```
 ## Pré-requisitos
 
 - Docker instalado e configurado na sua máquina.
